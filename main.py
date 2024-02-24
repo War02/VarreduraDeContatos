@@ -5,7 +5,7 @@ import re
 
 def save_emails_to_csv(emails, filename):
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['From']  # Apenas o campo "From" será incluído
+        fieldnames = ['From']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for email in emails:
