@@ -11,7 +11,7 @@ def save_emails_to_csv(emails, filename):
         for email in emails:
             writer.writerow(email)
 
-def fetch_emails_from_outlook(username, password, server='email-ssl.com.br', ssl_port=993, limit=50):
+def fetch_emails_from_outlook(username, password, server='email-ssl.com.br', ssl_port=993, limit=200):
     print("Conectando ao servidor IMAP...")
     imap = imaplib.IMAP4_SSL(server, ssl_port)
     print("Autenticando...")
@@ -24,7 +24,7 @@ def fetch_emails_from_outlook(username, password, server='email-ssl.com.br', ssl
 
     for num in data[0].split():
         if len(emails) >= limit:
-            break  # Parar se atingir o limite
+            break
         result, raw_email = imap.fetch(num, '(RFC822)')
         email_msg = message_from_bytes(raw_email[0][1])
 
@@ -40,13 +40,14 @@ def fetch_emails_from_outlook(username, password, server='email-ssl.com.br', ssl
     imap.logout()
 
     unique_emails = list(set(emails))
+    unique_emails.sort()
 
     return [{"From": email} for email in unique_emails]
 
 def main():
     username = 'm.barreto@mecpar.com'
     password = 'Dw1#8T1O'
-    emails = fetch_emails_from_outlook(username, password, limit=50)
+    emails = fetch_emails_from_outlook(username, password, limit=200)
     save_emails_to_csv(emails, 'outlook_emails.csv')
     print("Endereços de e-mail salvos em outlook_emails.csv")
 
