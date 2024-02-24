@@ -1,16 +1,17 @@
 import imaplib
 import csv
 from email import message_from_bytes
+import re
 
 def save_emails_to_csv(emails, filename):
     with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['From', 'To', 'Subject']  # Adicione mais campos conforme necessário
+        fieldnames = ['From']  # Apenas o campo "From" será incluído
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         writer.writeheader()
         for email in emails:
             writer.writerow(email)
 
-def fetch_emails_from_outlook(username, password, server='email-ssl.com.br', ssl_port=993, limit=100):
+def fetch_emails_from_outlook(username, password, server='email-ssl.com.br', ssl_port=993, limit=50):
     print("Conectando ao servidor IMAP...")
     imap = imaplib.IMAP4_SSL(server, ssl_port)
     print("Autenticando...")
@@ -21,29 +22,31 @@ def fetch_emails_from_outlook(username, password, server='email-ssl.com.br', ssl
     result, data = imap.search(None, 'ALL')
     emails = []
 
-    # Iterar sobre os e-mails apenas até o limite
     for num in data[0].split():
         if len(emails) >= limit:
             break  # Parar se atingir o limite
         result, raw_email = imap.fetch(num, '(RFC822)')
         email_msg = message_from_bytes(raw_email[0][1])
 
-        email_info = {
-            "From": email_msg['From'],
-            "To": email_msg['To'],
-            "Subject": email_msg['Subject']
-        }
-        emails.append(email_info)
+        match = re.search(r'<([^>]+)>', email_msg['From'])
+        if match:
+            from_email = match.group(1)
+        else:
+            from_email = email_msg['From']
+
+        emails.append(from_email)
 
     imap.close()
     imap.logout()
 
-    return emails
+    unique_emails = list(set(emails))
+
+    return [{"From": email} for email in unique_emails]
 
 def main():
     username = 'm.barreto@mecpar.com'
     password = 'Dw1#8T1O'
-    emails = fetch_emails_from_outlook(username, password, limit=100)
+    emails = fetch_emails_from_outlook(username, password, limit=50)
     save_emails_to_csv(emails, 'outlook_emails.csv')
     print("Endereços de e-mail salvos em outlook_emails.csv")
 
